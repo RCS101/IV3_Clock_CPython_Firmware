@@ -176,6 +176,25 @@ while True:
         # Check the time every 100ms
         if time.monotonic() > (last_time_check + 0.1):
             t = rtc.datetime
+            
+            # Correct time drifting each midnight. (technically, at 12:01:30am or 00:01:30)
+            # At midnight, correct for drift of the Adafruit Real Time Clock.
+            if ((t.tm_hour == 0) and (t.tm_min == 1) and (t.tm_sec == 30) and (FIXED_TIME_ON_tm_mday != t.tm_mday)):
+                # Measure how fast or slow your device is, by the number of seconds per day. 
+                # Do this by looking when the iv3 clock changes, then look at your computer's clock. Store the drift in a spreadsheet.
+                # Do this multiple times over days and find the average drift over time.
+                #   If TIME_DRIFT_IN_s is positive, the Adafruit RTC is running too fast.
+                #   If TIME_DRIFT_IN_s is negative, the Adafruit RTC is running too slow.
+                #   EX: If you observe your clock 12 seconds per day too fast, TIME_DRIFT_IN_s = 12. If it is 10s per day too slow, TIME_DRIFT_IN_s = -10.
+                TIME_DRIFT_IN_s = 12 # Do not set outside of range -30 to 29.
+                new_tm_sec = t.tm_sec-TIME_DRIFT_IN_s
+                new_time_tuple = time.struct_time((t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, new_tm_sec, 0, -1, -1))
+                # Overwrite the internal clock.
+                rtc.datetime = new_time_tuple
+                # Set variable to current today's date, to make the correction idempotent.
+                FIXED_TIME_ON_tm_mday = t.tm_mday
+                t = rtc.datetime
+            
             # toggle the dp on the last tube every second
             if t.tm_sec != lastSecond:
                 lastSecond = t.tm_sec
