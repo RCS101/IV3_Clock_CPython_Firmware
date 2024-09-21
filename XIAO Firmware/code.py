@@ -144,6 +144,9 @@ if t.tm_year == 0:
     t = time.struct_time((2021, 5, 20, 20, 4, 30, 0, -1, -1))
     rtc.datetime = t
 
+# initialise the fixed time on day variable
+FIXED_TIME_ON_tm_mday = t.tm_mday
+
 # States
 main_state = MAIN_TIME
 menu_state = MENU_12_24
